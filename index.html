@@ -3,32 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cat Personality Visualization</title>
+    <title>Cat Breed Personality Explorer</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="fixed-container">
+        <h1>The Data Behind Cat Personality 🐈</h1>
+        
         <div id="narrativeText">
-            <p id="storyText"></p>
+            <p id="storyText">You may have heard of cat breed stereotypes, like Russian Blues being shy or Siamese being demanding. If you're not a cat person, perhaps you've heard all cats are antisocial. Do these stereotypes hold true when we look at actual data? Hover over the breed names or dots to explore how different breeds truly rank in sociability towards humans and other cats. Scroll down to continue.</p>
         </div>
+        
+        <div id="fileUpload">
+            <p style="font-size: 1.1em; color: #ec8f33; margin-bottom: 15px;">
+                Upload the Feline_dataset.xlsx file
+            </p>
+            <p style="color: #666; margin-bottom: 15px; font-size: 0.9em;">
+                Download from: <a href="https://figshare.com/articles/dataset/Feline_behavior_and_personality_survey_data/14899077?file=33014249" target="_blank" style="color: #ec8f33;">figshare.com</a>
+            </p>
+            <input type="file" id="fileInput" accept=".xlsx,.xls" style="display: none;">
+            <button onclick="document.getElementById('fileInput').click()" class="upload-button">
+                Choose File
+            </button>
+            <p id="fileName" style="margin-top: 15px; color: #666; font-style: italic;"></p>
+        </div>
+        
+        <div class="loading" id="loading" style="display: none;">Processing data...</div>
+        <div id="chart"></div>
     </div>
-
-    <div id="fileUpload" style="display: none;">
-        <h1>Cat Personality Data Visualization</h1>
-        <p>Upload a different cat data Excel file</p>
-        <input type="file" id="fileInput" accept=".xlsx,.xls">
-        <p id="fileName"></p>
-    </div>
-
-    <div id="loading">
-        <p>Loading cat data...</p>
-    </div>
-
-    <div id="chart"></div>
-    <div id="tooltip"></div>
-
+    
+    <div class="tooltip" id="tooltip"></div>
     <script src="utils.js"></script>
     <script src="config.js"></script>
     <script src="dataLoader.js"></script>
