@@ -6,7 +6,12 @@ if (!window.recommendationPrefs) {
     };
 }
 
+let recommendationStep = 0;
+
 function createRecommendationChart(filteredBreedStats, recommendationMetrics) {
+    recommendationStep = 0;
+    window.recommendationPrefs = { rank1: null, rank2: null, rank3: null };
+    
     const breedLegendAlt = document.querySelector('.breed-legend');
     if (breedLegendAlt) {
         breedLegendAlt.style.display = 'none';
@@ -23,10 +28,18 @@ function createRecommendationChart(filteredBreedStats, recommendationMetrics) {
         .style("text-align", "center");
 
     container.append("h2")
-        .style("margin-bottom", "0px")
+        .style("margin-bottom", "20px")
         .style("font-size", "28px")
         .style("color", "#333")
         .text("Find Your Perfect Match");
+
+    const instructionText = container.append("p")
+        .attr("id", "recommendation-instruction")
+        .style("margin-bottom", "30px")
+        .style("font-size", "18px")
+        .style("color", "#555")
+        .style("max-width", "600px")
+        .text("Let's find the best cat breed for you! First, what's the MOST important trait you're looking for in a cat?");
 
     const selectorContainer = container.append("div")
         .attr("id", "recommendation-selector")
@@ -36,11 +49,6 @@ function createRecommendationChart(filteredBreedStats, recommendationMetrics) {
         .style("border-radius", "8px")
         .style("max-width", "600px");
 
-    selectorContainer.append("p")
-        .style("margin-bottom", "20px")
-        .style("font-size", "16px")
-        .style("color", "#666");
-
     const ranks = [
         { rank: 1, label: "Most Important", weight: 0.5 },
         { rank: 2, label: "Moderately Important", weight: 0.3 },
@@ -49,28 +57,33 @@ function createRecommendationChart(filteredBreedStats, recommendationMetrics) {
 
     ranks.forEach(({ rank, label, weight }) => {
         const row = selectorContainer.append("div")
+            .attr("id", `selector-row-${rank}`)
             .style("margin-bottom", "30px")
             .style("display", "flex")
             .style("align-items", "center")
-            .style("gap", "10px");
+            .style("gap", "10px")
+            .style("opacity", rank === 1 ? "1" : "0.3")
+            .style("pointer-events", rank === 1 ? "all" : "none");
 
         const suffix = rank === 1 ? 'st' : rank === 2 ? 'nd' : 'rd';
 
         row.append("label")
             .style("font-weight", "bold")
-            .style("min-width", "120px")
-            .text(`${rank}${suffix} Choice (${label}):`);
+            .style("min-width", "180px")
+            .style("text-align", "right")
+            .text(`${rank}${suffix} Choice:`);
 
         const select = row.append("select")
             .attr("id", `pref-${rank}`)
             .style("padding", "8px")
             .style("border-radius", "4px")
             .style("border", "1px solid #ccc")
-            .style("font-size", "14px");
+            .style("font-size", "14px")
+            .style("min-width", "300px");
 
         select.append("option")
             .attr("value", "")
-            .text("-- Select --");
+            .text("-- Select a trait --");
 
         recommendationMetrics.forEach(m => {
             select.append("option")
@@ -79,9 +92,15 @@ function createRecommendationChart(filteredBreedStats, recommendationMetrics) {
         });
 
         select.on("change", function () {
-            console.log(`Dropdown ${rank} changed to:`, this.value);
-            window.recommendationPrefs[`rank${rank}`] = this.value;
-            updatePodium(filteredBreedStats, recommendationMetrics);
+            const selectedValue = this.value;
+            
+            window.recommendationPrefs[`rank${rank}`] = selectedValue || null;
+            
+            if (selectedValue) {
+                advanceRecommendationStep(rank, filteredBreedStats, recommendationMetrics);
+            }
+            
+            updateAllDropdownFilters();
         });
     });
 
@@ -92,7 +111,8 @@ function createRecommendationChart(filteredBreedStats, recommendationMetrics) {
         .style("align-items", "flex-end")
         .style("gap", "50px")
         .style("margin-top", "50px")
-        .style("height", "200px");
+        .style("height", "200px")
+        .style("opacity", "0");
 
     [2, 1, 3].forEach((position, idx) => {
         podiumContainer.append("div")
@@ -105,36 +125,92 @@ function createRecommendationChart(filteredBreedStats, recommendationMetrics) {
     });
 }
 
-function updatePodium(filteredBreedStats, recommendationMetrics) {
-    console.log('=== updatePodium called ===');
+function advanceRecommendationStep(completedRank, filteredBreedStats, recommendationMetrics) {
+    recommendationStep = Math.max(recommendationStep, completedRank);
+    
+    const instructions = [
+        "",
+        "Great choice! Now, what's your second most important trait?",
+        "Perfect! Finally, what's your third priority?",
+        "Excellent! Here are your top 3 breed matches based on your preferences. Feel free to change any selection above to explore different matches!"
+    ];
+    
+    const instructionText = d3.select("#recommendation-instruction");
+    if (instructionText && instructions[recommendationStep]) {
+        instructionText.text(instructions[recommendationStep]);
+    }
+    
+    if (recommendationStep >= 1) {
+        d3.select("#selector-row-2")
+            .style("opacity", "1")
+            .style("pointer-events", "all");
+        filterAvailableOptions(2);
+    }
+    
+    if (recommendationStep >= 2) {
+        d3.select("#selector-row-3")
+            .style("opacity", "1")
+            .style("pointer-events", "all");
+        filterAvailableOptions(3);
+    }
+    
+    if (recommendationStep >= 3 && window.recommendationPrefs.rank1 && window.recommendationPrefs.rank2 && window.recommendationPrefs.rank3) {
+        d3.select("#podium-container")
+            .transition()
+            .duration(500)
+            .style("opacity", "1");
+        updatePodium(filteredBreedStats, recommendationMetrics);
+    }
+}
 
+function filterAvailableOptions(currentRank) {
+    const select = d3.select(`#pref-${currentRank}`).node();
+    if (!select) return;
+    
+    const otherRanks = [1, 2, 3].filter(r => r !== currentRank);
+    const selectedValues = otherRanks
+        .map(r => window.recommendationPrefs[`rank${r}`])
+        .filter(v => v);
+    
+    Array.from(select.options).forEach(option => {
+        if (option.value && selectedValues.includes(option.value)) {
+            option.disabled = true;
+            option.style.color = '#ccc';
+        } else {
+            option.disabled = false;
+            option.style.color = '';
+        }
+    });
+}
+
+function updateAllDropdownFilters() {
+    filterAvailableOptions(1);
+    filterAvailableOptions(2);
+    filterAvailableOptions(3);
+}
+
+function updatePodium(filteredBreedStats, recommendationMetrics) {
     const rank1 = window.recommendationPrefs.rank1;
     const rank2 = window.recommendationPrefs.rank2;
     const rank3 = window.recommendationPrefs.rank3;
 
-    console.log('Preferences:', { rank1, rank2, rank3 });
-
     d3.selectAll(".podium-position").selectAll("*").remove();
 
     if (!rank1 || !rank2 || !rank3) {
-        console.log('Not all preferences selected');
         return;
     }
 
     if (rank1 === rank2 || rank1 === rank3 || rank2 === rank3) {
-        console.log('Duplicate selections');
         return;
     }
 
     const breedScores = calculateBreedScores(rank1, rank2, rank3, filteredBreedStats);
-    console.log('Breed scores:', breedScores.length);
 
     if (!breedScores || breedScores.length === 0) {
         return;
     }
 
     const top3 = breedScores.slice(0, 3);
-    console.log('Top 3:', top3);
 
     const positions = [
         { rank: 1, suffix: 'st' },
@@ -144,18 +220,26 @@ function updatePodium(filteredBreedStats, recommendationMetrics) {
     const positionMap = { 0: 1, 1: 2, 2: 3 };
     const colors = ['#FFD700', '#C0C0C0', '#CD7F32'];
     const heights = [220, 170, 120];
+    
+    const isFirstRender = d3.select("#podium-container").style("opacity") === "0";
 
     top3.forEach((breedData, idx) => {
         const pos = positionMap[idx];
         const position = d3.select(`#podium-${pos}`);
         const posInfo = positions[pos - 1];
 
-        console.log(`Rendering position ${pos}:`, breedData.breed);
-
         const label = position.append("div")
             .style("margin-bottom", "15px")
             .style("text-align", "center")
-            .style("width", "250px");
+            .style("width", "250px")
+            .style("opacity", isFirstRender ? "0" : "1");
+        
+        if (isFirstRender) {
+            label.transition()
+                .duration(400)
+                .delay(800 + idx * 200)
+                .style("opacity", "1");
+        }
 
         label.append("div")
             .style("font-weight", "bold")
@@ -193,24 +277,36 @@ function updatePodium(filteredBreedStats, recommendationMetrics) {
         const block = position.append("div")
             .style("background", colors[idx])
             .style("width", "190px")
-            .style("height", heights[idx] + "px")
+            .style("height", isFirstRender ? "0px" : heights[idx] + "px")
             .style("display", "flex")
             .style("flex-direction", "column")
             .style("justify-content", "center")
             .style("align-items", "center")
             .style("border-radius", "8px 8px 0 0")
-            .style("box-shadow", "0 4px 12px rgba(0,0,0,0.3)");
+            .style("box-shadow", "0 4px 12px rgba(0,0,0,0.3)")
+            .style("overflow", "hidden");
 
-        console.log(`${posInfo.rank} Rendering position ${posInfo.suffix}:`, breedData.breed);
+        if (isFirstRender) {
+            block.transition()
+                .duration(800)
+                .delay(idx * 200)
+                .style("height", heights[idx] + "px");
+        }
 
-        block.append("div")
+        const rankLabel = block.append("div")
             .style("font-size", "36px")
             .style("font-weight", "bold")
             .style("color", "#333")
+            .style("opacity", isFirstRender ? "0" : "1")
             .text(posInfo.rank + posInfo.suffix);
-    });
 
-    console.log('=== Podium complete ===');
+        if (isFirstRender) {
+            rankLabel.transition()
+                .duration(400)
+                .delay(800 + idx * 200)
+                .style("opacity", "1");
+        }
+    });
 }
 
 function calculateBreedScores(metric1, metric2, metric3, filteredBreedStats) {
