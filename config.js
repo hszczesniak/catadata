@@ -11,11 +11,17 @@ const narratives = [
     
     "Woah! It's a Somali. If you've heard anything about Somalis before, you may be surprised by this! People generally say they are very social, active, and playful with other cats. Now that you've seen the extremes, feel free to explore more breeds on your own. Hover over any dot or breed name to see their scores. When you're ready to zoom out and see the full picture, scroll down to continue.",
     
-    "Let's zoom out! The data shows that some breeds seem to match their stereotypes and other oppose them. However, it is important to look at the individual variation within each breed. Every cat is unique, and the data really shows that!! Take a look. Hover over the dots or breeds to see all the individual cats' sociability scores within that breed. You'll see that individuals vary far more from one another than the difference between any breed averages.",
+    "Let's zoom out! The data shows that some breeds seem to match their stereotypes and other oppose them. However, it is important to look at the individual variation within each breed. Every cat is unique, and the data really shows that!! Take a look. Hover over the dots or breeds to see all the individual cats' sociability scores within that breed. You'll see that individuals vary far more from one another than the difference between any breed averages. When you're ready, scroll down to continue.",
     
-    "How do cats' personalities change as they age? Is this affected by gender? Let's explore the various metrics and see how they change throughout a cats life. Try out using cat years! Scroll to continue.",
+    "We've looked at how breed may affect personality, but what about other factors? Are male and female cats different and what can you expect to change as your cat grows up? Since we were just looking human sociability, we'll start there. Hover over any point on the chart to see detailed information about male and female cats at that age.",
     
-    "Let's keep in mind that cat's are all incredibly different individuals, and they will change throughout their lives. That said, let's find your best bet for a perfect match! Select three different specific traits that are important to you, ranked by priority, and you'll see the most promising cat breeds for you."
+    "Great! We can see the general trend that human sociability increases with age for all cats, and that male cats are generally more social than females. Now try switching to 'Cat Years' using the checkbox to see ages in a way that reflects feline development stages.",
+    
+    "Perfect! Cat years help us understand developmental stages better. A cat ages to an adult (18 human years) in just 1 year, and then ages more slowly after that. You may notice that viewing with cat years makes it easier to see how human sociability changes during those early life stages. Kittens are quite sociable! Now let's look at a different metric. Use the dropdown menu to select 'Activity/Playfulness' to see how energetic cats are at different ages.",
+    
+    "Interesting! You can see that male and female cats are almost the same in terms of playfulness and that activity levels decrease over a cat's lifetime. Now feel free to explore other metrics on your own. Try Fearfulness, Human Aggression, or any other trait that interests you. When you're ready, scroll down to continue.",
+    
+    "You have learned so much about cats just now, so let's find you your perfect cat match! ...Well, let's keep in mind what we just learned. Cat's are all incredibly different individuals and they change throughout their lives, so if you go out and buy the breed suggested here right now, it may still not be the perfect cat. That said, let's find your best bet for a best buddy! Select three different specific traits that are most important to you, ranked by priority, and you'll see the most promising cat breeds for you."
 ];
 
 const recommendationMetrics = [

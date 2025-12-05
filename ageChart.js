@@ -1,4 +1,11 @@
+let ageChartSubSection = 0;
+let ageChartInteracted = new Set();
+
 function createAgeChart(catData, convertToCatYears, convertCatYearsToHuman) {
+    ageChartSubSection = 0;
+    ageChartInteracted.clear();
+    window.ageChartSubSection = ageChartSubSection;
+    
     const breedLegendAlt = document.querySelector('.breed-legend');
     if (breedLegendAlt) {
         breedLegendAlt.style.display = 'none';
@@ -14,8 +21,8 @@ function createAgeChart(catData, convertToCatYears, convertCatYearsToHuman) {
 
     const selectorHTML = `
         <div class="metric-selector">
-            <label for="metricSelect">Metric: </label>
-            <select id="metricSelect">
+            <label for="metricSelect" style="opacity: 0.3; pointer-events: none;">Metric: </label>
+            <select id="metricSelect" style="opacity: 0.3; pointer-events: none;">
                 <option value="human_sociability">Human Sociability</option>
                 <option value="fearfulness">Fearfulness</option>
                 <option value="human_aggression">Human Aggression</option>
@@ -24,7 +31,7 @@ function createAgeChart(catData, convertToCatYears, convertCatYearsToHuman) {
                 <option value="litterbox_issues">Litterbox Issues</option>
                 <option value="excessive_grooming">Excessive Grooming</option>
             </select>
-            <label style="margin-left: 15px;">
+            <label style="margin-left: 15px; opacity: 0.3; pointer-events: none;" id="catYearsLabel">
                 <input type="checkbox" id="catYearsToggle"> Use cat years
             </label>
         </div>
@@ -32,6 +39,7 @@ function createAgeChart(catData, convertToCatYears, convertCatYearsToHuman) {
 
     d3.select("#chart").insert("div", ":first-child").html(selectorHTML);
 
+    updateAgeChartNarrative();
     renderAgeChart('human_sociability', false, catData, convertToCatYears, convertCatYearsToHuman);
     
     document.getElementById('metricSelect').addEventListener('change', function (e) {
@@ -40,6 +48,7 @@ function createAgeChart(catData, convertToCatYears, convertCatYearsToHuman) {
         d3.select("#chart").select("svg").remove();
         document.querySelector('.age-legend')?.remove();
         renderAgeChart(metric, useCatYears, catData, convertToCatYears, convertCatYearsToHuman);
+        checkAgeChartProgress('metric', metric);
     });
 
     document.getElementById('catYearsToggle').addEventListener('change', function (e) {
@@ -48,7 +57,64 @@ function createAgeChart(catData, convertToCatYears, convertCatYearsToHuman) {
         d3.select("#chart").select("svg").remove();
         document.querySelector('.age-legend')?.remove();
         renderAgeChart(metric, useCatYears, catData, convertToCatYears, convertCatYearsToHuman);
+        if (useCatYears) {
+            checkAgeChartProgress('catYears', true);
+        }
     });
+}
+
+function updateAgeChartNarrative() {
+    const ageNarratives = [
+        "We've looked at how breed may affect personality, but what about other factors? Are male and female cats different and what can you expect to change as your cat grows up? Since we were just looking human sociability, we'll start there. Hover over any point on the chart to see detailed information about male and female cats at that age.",
+        "Great! We can see the general trend that human sociability increases with age for all cats, and that male cats are generally more social than females. Now try switching to 'Cat Years' using the checkbox to see ages in a way that reflects feline development stages.",
+        "Perfect! Cat years help us understand developmental stages better. A cat ages to an adult (18 human years) in just 1 year, and then ages more slowly after that. You may notice that viewing with cat years makes it easier to see how human sociability changes during those early life stages. Kittens are quite sociable! Now let's look at a different metric. Use the dropdown menu to select 'Activity/Playfulness' to see how energetic cats are at different ages.",
+        "Interesting! You can see that male and female cats are almost the same in terms of playfulness and that activity levels decrease over a cat's lifetime. Now feel free to explore other metrics on your own. Try Fearfulness, Human Aggression, or any other trait that interests you. When you're ready, scroll down to continue."
+    ];
+    
+    const storyText = document.getElementById('storyText');
+    if (storyText && ageNarratives[ageChartSubSection]) {
+        storyText.textContent = ageNarratives[ageChartSubSection];
+    }
+}
+
+function checkAgeChartProgress(action, value) {
+    if (ageChartSubSection >= 3) return;
+    
+    if (ageChartSubSection === 0 && action === 'hover') {
+        ageChartInteracted.add('hover');
+        advanceAgeChartSection();
+    } else if (ageChartSubSection === 1 && action === 'catYears' && value === true) {
+        ageChartInteracted.add('catYears');
+        advanceAgeChartSection();
+    } else if (ageChartSubSection === 2 && action === 'metric' && value === 'activity_playfulness') {
+        ageChartInteracted.add('activity');
+        advanceAgeChartSection();
+    }
+}
+
+function advanceAgeChartSection() {
+    ageChartSubSection++;
+    window.ageChartSubSection = ageChartSubSection;
+    updateAgeChartNarrative();
+    
+    if (ageChartSubSection === 1) {
+        const catYearsLabel = document.getElementById('catYearsLabel');
+        if (catYearsLabel) {
+            catYearsLabel.style.opacity = '1';
+            catYearsLabel.style.pointerEvents = 'all';
+        }
+    } else if (ageChartSubSection === 2) {
+        const metricLabel = document.querySelector('.metric-selector label[for="metricSelect"]');
+        const metricSelect = document.getElementById('metricSelect');
+        if (metricLabel) {
+            metricLabel.style.opacity = '1';
+            metricLabel.style.pointerEvents = 'all';
+        }
+        if (metricSelect) {
+            metricSelect.style.opacity = '1';
+            metricSelect.style.pointerEvents = 'all';
+        }
+    }
 }
 
 function renderAgeChart(metric, useCatYears, catData, convertToCatYears, convertCatYearsToHuman) {
@@ -227,6 +293,8 @@ function renderAgeChart(metric, useCatYears, catData, convertToCatYears, convert
                 ${metricLabel}: ${d.mean.toFixed(2)}<br/>
                 Sample: ${d.count} cats
             `);
+            
+            checkAgeChartProgress('hover', true);
         })
         .on("mousemove", function (event) {
             const chartDiv = document.getElementById('chart');
@@ -272,6 +340,8 @@ function renderAgeChart(metric, useCatYears, catData, convertToCatYears, convert
                 ${metricLabel}: ${d.mean.toFixed(2)}<br/>
                 Sample: ${d.count} cats
             `);
+            
+            checkAgeChartProgress('hover', true);
         })
         .on("mousemove", function (event) {
             const chartDiv = document.getElementById('chart');
@@ -307,3 +377,4 @@ function renderAgeChart(metric, useCatYears, catData, convertToCatYears, convert
 }
 
 window.createAgeChart = createAgeChart;
+window.ageChartSubSection = ageChartSubSection;

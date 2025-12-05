@@ -46,9 +46,13 @@ function initializeScrollController(data, colors, narratives) {
                 } else if (newSection === 1) {
                     currentSubSection = 6;
                 } else if (newSection === 2) {
-                    currentSubSection = 7;
+                    if (window.ageChartSubSection !== undefined) {
+                        currentSubSection = 7 + window.ageChartSubSection;
+                    } else {
+                        currentSubSection = 7;
+                    }
                 } else if (newSection === 3) {
-                    currentSubSection = 8;
+                    currentSubSection = 11;
                 }
                 
                 document.getElementById('storyText').textContent = narratives[currentSubSection];
