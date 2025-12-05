@@ -1,9 +1,28 @@
-async function loadData(file, generateDistinctColors) {
+async function loadData(file) {
     try {
-        const data = await file.arrayBuffer();
+        let data;
+        if (file instanceof File) {
+            data = await file.arrayBuffer();
+        } else if (typeof file === 'string') {
+            const response = await fetch(file);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch file: ${response.statusText}`);
+            }
+            data = await response.arrayBuffer();
+        } else {
+            throw new Error('Invalid file input');
+        }
+        
         const workbook = XLSX.read(data, { type: 'array' });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[1]];
+        const firstSheetName = workbook.SheetNames[1];
+        console.log('Available sheets:', workbook.SheetNames);
+        console.log('Using sheet:', firstSheetName);
+        const firstSheet = workbook.Sheets[firstSheetName];
         const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+        
+        console.log('Raw data rows:', jsonData.length);
+        console.log('First row sample:', jsonData[0]);
+        console.log('Available columns:', jsonData.length > 0 ? Object.keys(jsonData[0]) : 'No columns');
 
         const catData = jsonData.map((row, index) => ({
             id: `cat_${index}`,
@@ -51,8 +70,13 @@ async function loadData(file, generateDistinctColors) {
         console.log('Sample cat:', catData[0]);
         console.log('All field names:', catData.length > 0 ? Object.keys(catData[0]) : 'No data');
 
+        if (catData.length === 0) {
+            throw new Error('No valid cat data found in the file');
+        }
+
         const uniqueBreeds = [...new Set(catData.map(cat => cat.breed))].sort();
-        const colors = generateDistinctColors(uniqueBreeds.length);
+        console.log('Unique breeds found:', uniqueBreeds);
+        const colors = window.generateDistinctColors(uniqueBreeds.length);
         const breedColors = {};
         uniqueBreeds.forEach((breed, i) => {
             breedColors[breed] = colors[i];
